@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1a3a5c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>仙剑奇侠传Online</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0e17;font-family:'Microsoft YaHei','PingFang SC',sans-serif}
+#game-wrapper{position:relative;width:100%;height:100%;overflow:hidden}
+#gameCanvas{display:block;width:100%;height:100%}
+#ui-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10}
+#ui-layer>*{pointer-events:auto}
+.hidden{display:none!important}
+#loading-screen{position:absolute;inset:0;background:linear-gradient(180deg,#0a1628,#1a3a5c,#0a1628);display:flex;align-items:center;justify-content:center;z-index:1000}
+.loading-content{text-align:center;color:#d4af37}
+.loading-content h1{font-size:28px;margin-bottom:30px;text-shadow:0 0 20px rgba(212,175,55,.5);letter-spacing:4px}
+.loading-bar{width:280px;height:6px;background:rgba(255,255,255,.1);border-radius:3px;margin:0 auto 15px;overflow:hidden}
+.loading-progress{width:0;height:100%;background:linear-gradient(90deg,#d4af37,#f0e68c,#d4af37);border-radius:3px;animation:loading 2s ease-in-out forwards}
+.loading-text{color:#8ab4c7;font-size:14px}
+@keyframes loading{0%{width:0}50%{width:70%}100%{width:100%}}
+#login-screen{position:absolute;inset:0;background:linear-gradient(180deg,#0a1628,#1a3a5c);display:flex;align-items:center;justify-content:center}
+.login-panel{background:rgba(10,22,40,.95);border:1px solid rgba(212,175,55,.3);border-radius:16px;padding:30px 25px;width:90%;max-width:380px}
+.login-panel h2{color:#d4af37;text-align:center;font-size:24px;margin-bottom:20px}
+.server-select{margin-bottom:20px}
+.server-select label{display:block;color:#8ab4c7;font-size:13px;margin-bottom:6px}
+.server-select select{width:100%;padding:10px;background:rgba(255,255,255,.05);border:1px solid rgba(212,175,55,.2);border-radius:8px;color:#e0e0e0;font-size:14px}
+.role-select{margin-bottom:20px}
+.role-select h3{color:#d4af37;font-size:16px;margin-bottom:12px;text-align:center}
+.role-cards{display:flex;gap:10px;justify-content:center}
+.role-card{flex:1;background:rgba(255,255,255,.03);border:2px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;text-align:center;cursor:pointer}
+.role-card.active{border-color:#d4af37;background:rgba(212,175,55,.1)}
+.role-icon{font-size:28px;margin-bottom:6px}
+.role-card h4{color:#e0e0e0;font-size:14px;margin-bottom:4px}
+.role-card p{color:#8ab4c7;font-size:11px;line-height:1.4}
+#player-name{width:100%;padding:12px;background:rgba(255,255,255,.05);border:1px solid rgba(212,175,55,.2);border-radius:8px;color:#e0e0e0;font-size:15px;text-align:center;margin-bottom:15px}
+#start-game{width:100%;padding:14px;background:linear-gradient(135deg,#d4af37,#b8941f);border:none;border-radius:8px;color:#0a1628;font-size:16px;font-weight:bold;cursor:pointer}
+#hud{position:absolute;inset:0;pointer-events:none}
+#hud>*{pointer-events:auto}
+#top-bar{position:absolute;top:0;left:0;right:0;padding:10px 15px;display:flex;justify-content:space-between;align-items:flex-start;background:linear-gradient(180deg,rgba(0,0,0,.6),transparent)}
+#player-info{display:flex;align-items:center;gap:10px}
+#avatar{width:50px;height:50px;background:linear-gradient(135deg,#d4af37,#8b6914);border-radius:50%;border:2px solid rgba(212,175,55,.5);display:flex;align-items:center;justify-content:center;font-size:24px}
+#status-bars{display:flex;flex-direction:column;gap:4px;width:140px}
+#hp-bar,#mp-bar{position:relative;height:10px;background:rgba(0,0,0,.5);border-radius:5px;overflow:hidden}
+#hp-bar .bar-fill{height:100%;width:100%;background:linear-gradient(90deg,#c62828,#e53935);border-radius:5px}
+#mp-bar .bar-fill{height:100%;width:100%;background:linear-gradient(90deg,#1565c0,#42a5f5);border-radius:5px}
+.bar-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;text-shadow:0 0 2px rgba(0,0,0,.8)}
+#level-info{display:flex;flex-direction:column;align-items:center;gap:2px}
+#player-level{color:#d4af37;font-size:16px;font-weight:bold}
+#player-role{color:#8ab4c7;font-size:11px}
+#mini-map{position:absolute;top:10px;right:15px;width:100px;height:100px;background:rgba(0,0,0,.5);border:1px solid rgba(212,175,55,.3);border-radius:8px}
+#quest-tracker{position:absolute;top:80px;left:15px;background:rgba(0,0,0,.6);border-left:3px solid #d4af37;padding:10px 12px;border-radius:0 8px 8px 0;max-width:200px}
+.quest-title{color:#d4af37;font-size:13px;font-weight:bold;margin-bottom:4px}
+.quest-desc{color:#b0c4de;font-size:12px}
+#bottom-controls{position:absolute;bottom:0;left:0;right:0;padding:15px;display:flex;align-items:flex-end;justify-content:space-between;background:linear-gradient(0deg,rgba(0,0,0,.7),transparent)}
+#joystick-zone{width:140px;height:140px;position:relative}
+#joystick-base{position:absolute;inset:0;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center}
+#joystick-knob{width:60px;height:60px;background:rgba(212,175,55,.4);border:2px solid rgba(212,175,55,.6);border-radius:50%;position:absolute}
+#action-buttons{display:flex;gap:10px;align-items:flex-end;margin-bottom:10px}
+.action-btn{width:65px;height:65px;border-radius:50%;border:2px solid rgba(255,255,255,.2);background:rgba(0,0,0,.5);color:#fff;font-size:12px;cursor:pointer}
+#btn-attack{background:rgba(198,40,40,.6)}
+#btn-skill1{background:rgba(21,101,192,.6)}
+#btn-skill2{background:rgba(46,125,50,.6)}
+#btn-skill3{background:rgba(123,31,162,.6)}
+#menu-buttons{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);display:flex;gap:8px}
+.menu-btn{padding:8px 14px;background:rgba(0,0,0,.5);border:1px solid rgba(212,175,55,.3);border-radius:20px;color:#d4af37;font-size:12px;cursor:pointer}
+#dialog-box{position:absolute;bottom:80px;left:15px;right:15px;background:rgba(10,22,40,.95);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:15px;z-index:100}
+.dialog-content{display:flex;gap:12px;align-items:flex-start}
+.npc-avatar{width:60px;height:60px;background:linear-gradient(135deg,#8b6914,#d4af37);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:28px}
+.dialog-text{flex:1;color:#e0e0e0;font-size:14px;line-height:1.6}
+.dialog-next{margin-top:10px;padding:8px 20px;background:rgba(212,175,55,.2);border:1px solid rgba(212,175,55,.4);border-radius:6px;color:#d4af37;font-size:13px;cursor:pointer;float:right}
+.panel{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:400px;max-height:70%;background:rgba(10,22,40,.97);border:1px solid rgba(212,175,55,.3);border-radius:16px;overflow:hidden;z-index:200}
+.panel-header{display:flex;justify-content:space-between;align-items:center;padding:15px;border-bottom:1px solid rgba(212,175,55,.2)}
+.panel-header h3{color:#d4af37;font-size:18px}
+.close-btn{width:32px;height:32px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:50%;color:#8ab4c7;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.inventory-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:15px;max-height:400px;overflow-y:auto}
+.inventory-slot{aspect-ratio:1;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px}
+.quest-list{padding:15px;max-height:400px;overflow-y:auto}
+.quest-item{padding:12px;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:8px;border-left:3px solid #d4af37}
+.quest-item h4{color:#e0e0e0;font-size:14px;margin-bottom:4px}
+.quest-item p{color:#8ab4c7;font-size:12px}
+.skill-list{padding:15px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.skill-item{padding:12px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid rgba(255,255,255,.1)}
+.skill-item h4{color:#d4af37;font-size:14px}
+.skill-item p{color:#8ab4c7;font-size:12px}
+.world-map{padding:20px;display:flex;flex-direction:column;gap:10px;align-items:center}
+.map-node{width:80%;padding:15px;background:rgba(255,255,255,.03);border:1px solid rgba(212,175,55,.2);border-radius:10px;text-align:center;color:#e0e0e0;cursor:pointer}
+.map-node.current{border-color:#d4af37;background:rgba(212,175,55,.1)}
+#damage-layer{position:absolute;inset:0;pointer-events:none;z-index:50}
+.damage-text{position:absolute;color:#ff4444;font-size:18px;font-weight:bold;text-shadow:0 0 4px rgba(0,0,0,.8);animation:damageFloat 1s ease-out forwards}
+@keyframes damageFloat{0%{opacity:1;transform:translateY(0)}50%{opacity:1;transform:translateY(-30px)}100%{opacity:0;transform:translateY(-60px)}}
+.chat-bubble{position:absolute;background:rgba(0,0,0,.75);color:#fff;padding:6px 12px;border-radius:12px;font-size:12px;white-space:nowrap;pointer-events:none;z-index:30;animation:chatFloat 2s ease-out forwards}
+@keyframes chatFloat{0%{opacity:1;transform:translateY(0)}70%{opacity:1}100%{opacity:0;transform:translateY(-40px)}}
+#save-panel textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(212,175,55,.2);border-radius:8px;color:#e0e0e0;padding:10px;font-size:12px;resize:none}
+#btn-import{width:100%;padding:10px;background:rgba(212,175,55,.2);border:1px solid rgba(212,175,55,.4);border-radius:8px;color:#d4af37;cursor:pointer;margin-top:10px}
+</style>
+<script>
+const Utils={uuid:()=>{let e=Date.now();return'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,t=>{let n=(e+16*Math.random())%16|0;return e=Math.floor(e/16),('x'===t?n:3&n|8).toString(16)})},distance:(e,t,n,r)=>{let a=e-n,o=t-r;return Math.sqrt(a*a+o*o)},clamp:(e,t,n)=>Math.min(Math.max(e,t),n),lerp:(e,t,n)=>e+(t-e)*n,randomRange:(e,t)=>e+Math.random()*(t-e),worldToScreen:(e,t,n,r,o)=>{return{x:e-n+o.width/2,y:t-r+o.height/2}}};
+
+const MapData={TILE_SIZE:64,SCENES:{shushan:{name:'蜀山',width:40,height:30,spawn:{x:20,y:25},exits:[{x:0,y:10,to:'suzhou',tx:39,ty:10},{x:39,y:15,to:'xianling',tx:0,ty:15}],npcs:[{id:'master',x:20,y:8,name:'蜀山掌门',dialog:['少侠，欢迎来到蜀山剑派。','近日妖魔作乱，江湖不太平。','你可愿为我蜀山弟子，斩妖除魔？'],quest:'quest_1',icon:'👤'},{id:'shopkeeper',x:8,y:12,name:'杂货商人',dialog:['来看看有什么需要的。'],shop:!0,icon:'🏪'},{id:'healer',x:32,y:12,name:'医仙',dialog:['受伤了吗？让我为你治疗。'],heal:!0,icon:'💚'}],monsters:[{type:'wolf',x:5,y:5,count:3,respawn:30},{type:'wolf',x:35,y:5,count:3,respawn:30},{type:'wolf',x:15,y:20,count:2,respawn:30},{type:'wolf',x:25,y:20,count:2,respawn:30}],objects:[{x:18,y:6,w:4,h:1,type:'building',name:'蜀山大殿',color:'#4a6741'},{x:10,y:10,w:2,h:2,type:'tree',color:'#2d5016'},{x:30,y:10,w:2,h:2,type:'tree',color:'#2d5016'},{x:5,y:15,w:30,h:1,type:'wall',color:'#8b7355'},{x:5,y:25,w:30,h:1,type:'wall',color:'#8b7355'}],bgColor:'#1a3a2a',groundColor:'#2d5a3d'},suzhou:{name:'苏州城',width:50,height:35,spawn:{x:25,y:30},exits:[{x:49,y:17,to:'shushan',tx:1,ty:10},{x:0,y:20,to:'xianling',tx:49,ty:20}],npcs:[{id:'mayor',x:25,y:8,name:'苏州知府',dialog:['苏州城近日有妖怪出没。','少侠若能帮忙除妖，必有重谢。'],quest:'quest_2',icon:'👤'},{id:'innkeeper',x:10,y:15,name:'客栈老板',dialog:['客官，打尖还是住店？'],icon:'🏨'},{id:'blacksmith',x:40,y:15,name:'铁匠',dialog:['需要打造兵器吗？'],shop:!0,icon:'⚒️'}],monsters:[{type:'bandit',x:5,y:5,count:4,respawn:45},{type:'bandit',x:45,y:5,count:4,respawn:45},{type:'bandit',x:15,y:25,count:3,respawn:45}],objects:[{x:20,y:5,w:10,h:3,type:'building',name:'知府衙门',color:'#8b4513'},{x:8,y:12,w:4,h:3,type:'building',name:'悦来客栈',color:'#a0522d'},{x:38,y:12,w:4,h:3,type:'building',name:'铁匠铺',color:'#696969'},{x:5,y:5,w:40,h:1,type:'wall',color:'#8b7355'},{x:5,y:5,w:1,h:25,type:'wall',color:'#8b7355'},{x:45,y:5,w:1,h:25,type:'wall',color:'#8b7355'}],bgColor:'#3a3a2a',groundColor:'#5a5a3d'},xianling:{name:'仙灵岛',width:35,height:30,spawn:{x:17,y:25},exits:[{x:0,y:15,to:'suzhou',tx:1,ty:20},{x:34,y:15,to:'shushan',tx:1,ty:15}],npcs:[{id:'lingbo',x:17,y:8,name:'凌波仙子',dialog:['仙灵岛乃世外桃源。','你我有缘，送你一颗灵丹。'],quest:'quest_3',icon:'🧚'},{id:'fairy',x:8,y:12,name:'小仙童',dialog:['仙子姐姐可厉害了！'],icon:'🧚‍♂️'}],monsters:[{type:'spirit',x:5,y:5,count:3,respawn:60},{type:'spirit',x:30,y:5,count:3,respawn:60},{type:'spirit',x:10,y:20,count:2,respawn:60},{type:'spirit',x:25,y:20,count:2,respawn:60}],objects:[{x:15,y:6,w:5,h:2,type:'building',name:'水月宫',color:'#87ceeb'},{x:5,y:5,w:2,h:2,type:'tree',color:'#228b22'},{x:28,y:5,w:2,h:2,type:'tree',color:'#228b22'},{x:5,y:10,w:25,h:1,type:'water',color:'#4169e1'},{x:5,y:20,w:25,h:1,type:'water',color:'#4169e1'}],bgColor:'#1a3a4a',groundColor:'#2d5a6d'}},MONSTERS:{wolf:{name:'野狼',hp:80,atk:15,def:5,exp:15,gold:10,range:40,speed:80,aggroRange:200,skills:['bite'],drops:[{item:'wolf_fang',chance:.3},{item:'leather',chance:.2}]},bandit:{name:'山贼',hp:120,atk:22,def:8,exp:25,gold:20,range:35,speed:70,aggroRange:180,skills:['slash'],drops:[{item:'iron_sword',chance:.1},{item:'bandit_cloth',chance:.25}]},spirit:{name:'灵妖',hp:100,atk:30,def:3,exp:35,gold:15,range:120,speed:60,aggroRange:250,skills:['magic_missile'],drops:[{item:'spirit_stone',chance:.4},{item:'mana_potion',chance:.3}]}}};
+class Player extends Entity{constructor(e,t,n){super(e,t,32,48);this.name=n.name||'少侠';this.role=n.role||'swordsman';this.color=n.role==='swordsman'?'#c62828':n.role==='mage'?'#1565c0':'#2e7d32';this.speed=120;this.maxHp=150;this.hp=150;this.maxMp=100;this.mp=100;this.atk=n.role==='swordsman'?20:12;this.def=n.role==='swordsman'?12:8;this.matk=n.role==='mage'?25:10;this.mdef=n.role==='mage'?15:8;this.critRate=n.role==='swordsman'?.1:.05;this.gold=0;this.inventory=[];this.equipment={weapon:null,armor:null,accessory:null};this.quests=[];this.completedQuests=[];this.currentMap='shushan';this.expToNext=100;this.skillPoints=0;this.initSkills()}initSkills(){this.role==='swordsman'?this.skills=[{id:'slash',name:'剑气斩',type:'active',dmg:1.5,mp:15,cd:3,range:80,icon:'⚔️',desc:'对前方敌人造成伤害'},{id:'whirlwind',name:'旋风斩',type:'active',dmg:2,mp:30,cd:8,range:100,icon:'🌪️',desc:'旋转攻击周围敌人'},{id:'sword_aura',name:'剑气护体',type:'buff',mp:25,cd:15,range:0,icon:'🛡️',desc:'提升防御力',duration:10,effect:{def:15}}]:this.role==='mage'?this.skills=[{id:'fireball',name:'火球术',type:'active',dmg:2,mp:20,cd:4,range:200,icon:'🔥',desc:'发射火球攻击敌人'},{id:'ice_spike',name:'冰锥术',type:'active',dmg:1.8,mp:18,cd:3,range:180,icon:'❄️',desc:'冰锥刺穿敌人'},{id:'thunder',name:'天雷破',type:'active',dmg:3,mp:50,cd:12,range:250,icon:'⚡',desc:'召唤天雷攻击'}]:this.skills=[{id:'heal',name:'回春术',type:'heal',heal:50,mp:20,cd:5,range:150,icon:'💚',desc:'恢复目标生命值'},{id:'buff',name:'仙灵护体',type:'buff',mp:25,cd:15,range:0,icon:'✨',desc:'提升攻击力',duration:10,effect:{atk:15}},{id:'purify',name:'净化术',type:'heal',heal:30,mp:15,cd:4,range:150,icon:'🌟',desc:'清除负面状态'}]}gainExp(e){this.exp+=e;if(this.exp>=this.expToNext){this.levelUp();return!0}return!1}levelUp(){this.level++;this.exp-=this.expToNext;this.expToNext=Math.floor(this.expToNext*1.5);this.maxHp+=20;this.hp=this.maxHp;this.maxMp+=10;this.mp=this.maxMp;this.atk+=3;this.def+=2;this.matk+=3;this.mdef+=2;this.skillPoints++}useSkill(e,t){let n=this.skills.find(t=>t.id===e);if(!n||this.attackCooldown>0||!this.useMp(n.mp))return!1;this.attackCooldown=1/this.attackSpeed;let r=Utils.distance(this.x,this.y,t.x,t.y);if(r>n.range)return!1;this.state='attack';this.direction={x:(t.x-this.x)/r,y:(t.y-this.y)/r};if(n.type==='active'){let a=this.matk*n.dmg,o=t.takeDamage(a,'magic');this.showDamage(o,t)}else if(n.type==='heal'){let a=this.matk+n.heal,o=t.heal(a);this.showHeal(o,t)}else if(n.type==='buff'){this.addBuff({id:n.id,name:n.name,duration:n.duration,effect:n.effect})}return!0}attack(e){if(this.attackCooldown>0)return!1;this.attackCooldown=1/this.attackSpeed;this.state='attack';let t=this.atk,n=Utils.distance(this.x,this.y,e.x,e.y),r=Math.atan2(e.y-this.y,e.x-this.x);this.direction={x:Math.cos(r),y:Math.sin(r)};if(n<=this.getAttackRange()){let a=Math.random()<this.critRate,o=a?t*this.critDmg:t,s=e.takeDamage(o,'physical');this.showDamage(s,e)}return!0}showDamage(e,t){let n=document.getElementById('damage-layer');if(!n)return;let r=document.createElement('div');r.className='damage-text';r.textContent='-'+Math.floor(e);r.style.left='50%';r.style.top='50%';n.appendChild(r);setTimeout(()=>r.remove(),1e3)}showHeal(e,t){let n=document.getElementById('damage-layer');if(!n)return;let r=document.createElement('div');r.className='damage-text';r.style.color='#4caf50';r.textContent='+'+Math.floor(e);r.style.left='50%';r.style.top='50%';n.appendChild(r);setTimeout(()=>r.remove(),1e3)}draw(e,t,n,r){super.draw(e,t,n,r);let a=this.getScreenPos(t,n,r);e.save();e.translate(a.x,a.y);let o=Math.atan2(this.direction.y,this.direction.x);e.rotate(o);e.fillStyle=this.role==='swordsman'?'#c0c0c0':'#ffd700';e.fillRect(10,-3,20,6);e.restore()}drawFace(e,t,n){e.fillStyle='#ffdbac';e.fillRect(t-8,n-12,16,14);e.fillStyle='#000';e.fillRect(t-5,n-8,3,3);e.fillRect(t+2,n-8,3,3);e.fillStyle='#c62828';e.fillRect(t-3,n-3,6,2)}}
+
+class Monster extends Entity{constructor(e,t,n){let r=MapData.MONSTERS[n];super(e,t,32,32);this.monsterType=n;this.name=r.name;this.color=n==='wolf'?'#8d6e63':n==='bandit'?'#5d4037':'#9575cd';this.maxHp=r.hp;this.hp=r.hp;this.atk=r.atk;this.def=r.def;this.speed=r.speed;this.aggroRange=r.aggroRange;this.attackRange=r.range;this.exp=r.exp;this.gold=r.gold;this.drops=r.drops;this.respawnTime=r.respawn;this.respawnTimer=0;this.patrolCenter={x:e,y:t};this.patrolRadius=100;this.aiState='patrol';this.aiTimer=0;this.target=null}update(e,t){if(this.isDead){this.respawnTimer+=e;if(this.respawnTimer>=this.respawnTime){this.respawn();return}return}super.update(e);this.aiTimer+=e;if(this.aiTimer>=1){this.aiTimer=0;this.updateAI(t)}this.x=Utils.clamp(this.x,32,MapData.SCENES[this.currentMap].width*64-32);this.y=Utils.clamp(this.y,32,MapData.SCENES[this.currentMap].height*64-32)}updateAI(e){let t=Utils.distance(this.x,this.y,e.x,e.y);if(t<=this.aggroRange&&t>this.attackRange){this.aiState='chase';this.target=e;this.state='chase'}else if(t<=this.attackRange&&this.attackCooldown<=0){this.aiState='attack';this.target=e;this.state='attack';this.attackTarget(e)}else if(this.aiState==='chase'&&t>this.aggroRange*1.5){this.aiState='patrol';this.target=null;this.state='idle';this.vx=0;this.vy=0}else if(this.aiState==='patrol'){let n=Utils.distance(this.x,this.y,this.patrolCenter.x,this.patrolCenter.y);if(n>this.patrolRadius||Math.random()<.02){let r=Math.random()*Math.PI*2;this.vx=Math.cos(r)*this.speed*.3;this.vy=Math.sin(r)*this.speed*.3;this.direction={x:Math.cos(r),y:Math.sin(r)}}}}attackTarget(e){this.attackCooldown=1;let t=this.atk,n=e.takeDamage(t,'physical');e.showDamage(n,e)}respawn(){this.isDead=!1;this.hp=this.maxHp;this.x=this.patrolCenter.x;this.y=this.patrolCenter.y;this.vx=0;this.vy=0;this.state='idle';this.respawnTimer=0}draw(e,t,n,r){if(this.isDead)return;let a=this.getScreenPos(t,n,r);e.save();this.drawShadow(e,a.x,a.y);e.fillStyle=this.color;e.fillRect(a.x-this.width/2,a.y-this.height/2,this.width,this.height);e.fillStyle='#ffcc80';e.fillRect(a.x-6,a.y-6,4,4);e.fillRect(a.x+2,a.y-6,4,4);e.fillStyle='#3e2723';e.fillRect(a.x-3,a.y+2,6,3);this.drawHpBar(e,a.x,a.y);e.restore()}}
+
+class NPC extends Entity{constructor(e,t,n){super(e,t,32,40);this.npcId=n.id;this.name=n.name;this.dialogs=n.dialog||['...'];this.currentDialog=0;this.hasQuest=n.quest;this.questId=n.quest;this.isShop=n.shop;this.isHealer=n.heal;this.icon=n.icon||'👤';this.color='#ffd700';this.interactionRange=60}interact(e){if(this.hasQuest&&e.quests.find(e=>e.id===this.questId)){let t=e.quests.find(e=>e.id===this.questId);return t.completed?{type:'complete',quest:t}:{type:'progress',quest:t}}return this.hasQuest&&!e.quests.find(e=>e.id===this.questId)&&!e.completedQuests.includes(this.questId)?{type:'accept',questId:this.questId}:{type:'dialog',text:this.dialogs[this.currentDialog]}}nextDialog(){this.currentDialog=(this.currentDialog+1)%this.dialogs.length}draw(e,t,n,r){let a=this.getScreenPos(t,n,r);e.save();this.drawShadow(e,a.x,a.y);e.fillStyle='#4a6741';e.fillRect(a.x-14,a.y-20,28,40);e.fillStyle='#ffdbac';e.fillRect(a.x-10,a.y-16,20,16);e.fillStyle='#000';e.fillRect(a.x-6,a.y-12,3,3);e.fillRect(a.x+3,a.y-12,3,3);e.fillStyle=this.color;e.font='20px sans-serif';e.textAlign='center';e.fillText(this.icon,a.x,a.y-28);e.restore()}}
+
+class CombatSystem{constructor(e){this.game=e;this.projectiles=[];this.effects=[];this.damageNumbers=[]}update(e){this.projectiles.forEach(t=>{t.update(e);if(t.isDead)return;let n=this.game.monsters.filter(n=>!n.isDead&&t.checkHit(n));n.forEach(n=>{let r=t.type==='magic'?n.takeDamage(t.dmg,'magic'):n.takeDamage(t.dmg,'physical');this.showDamage(r,n.x,n.y);n.hp<=0&&this.handleKill(n,t.owner)})});this.projectiles=this.projectiles.filter(e=>!e.isDead);this.damageNumbers.forEach(t=>{t.y-=30*e;t.life-=e;t.alpha=t.life/t.maxLife});this.damageNumbers=this.damageNumbers.filter(e=>e.life>0)}handleKill(e,t){t.gainExp(e.exp);t.gold+=e.gold;this.showExpGain(e.exp,e.x,e.y-30);this.dropItems(e);this.game.checkQuestProgress('kill',e.monsterType)}dropItems(e){let t=MapData.SCENES[this.game.player.currentMap];if(!t)return;e.drops.forEach(n=>{if(Math.random()<n.chance){let r=this.createItem(n.item);this.game.player.inventory.push(r);this.showLoot(r.name,e.x+Utils.randomRange(-20,20),e.y+Utils.randomRange(-20,20))}})}createItem(e){let t={wolf_fang:{name:'狼牙',type:'material',desc:'野狼的尖牙'},leather:{name:'兽皮',type:'material',desc:'野兽的毛皮'},iron_sword:{name:'铁剑',type:'weapon',atk:15,desc:'普通的铁剑'},bandit_cloth:{name:'粗布衣',type:'armor',def:8,desc:'山贼的衣物'},spirit_stone:{name:'灵石',type:'material',desc:'蕴含灵气的石头'},mana_potion:{name:'法力药水',type:'consumable',mp:50,desc:'恢复50点法力值'},health_potion:{name:'生命药水',type:'consumable',hp:80,desc:'恢复80点生命值'}};return{id:Utils.uuid(),...t[e]||{name:'未知物品',type:'material',desc:'神秘物品'}}}showDamage(e,t,n){this.damageNumbers.push({x:t,y:n-20,value:e,life:1,maxLife:1,alpha:1,color:'#ff4444'})}showExpGain(e,t,n){this.damageNumbers.push({x:t,y:n,value:'+'+e+'EXP',life:1.5,maxLife:1.5,alpha:1,color:'#ffd700'})}showLoot(e,t,n){this.damageNumbers.push({x:t,y:n,value:'获得:'+e,life:2,maxLife:2,alpha:1,color:'#9c27b0'})}}
+
+class QuestSystem{constructor(e){this.game=e;this.quests=this.initQuests()}initQuests(){return{quest_1:{id:'quest_1',title:'初入蜀山',desc:'与蜀山掌门对话，了解当前局势。',type:'talk',target:'master',reward:{exp:50,gold:20,items:[]},completed:!1},quest_2:{id:'quest_2',title:'苏州除妖',desc:'前往苏州城，击败5只山贼。',type:'kill',target:'bandit',count:5,current:0,reward:{exp:150,gold:80,items:[{id:'iron_sword',name:'铁剑'}]},completed:!1},quest_3:{id:'quest_3',title:'仙灵岛探秘',desc:'前往仙灵岛，击败3只灵妖。',type:'kill',target:'spirit',count:3,current:0,reward:{exp:200,gold:100,items:[{id:'mana_potion',name:'法力药水',count:3}]},completed:!1}}}acceptQuest(e){let t=this.quests[e];if(!t)return!1;if(this.game.player.quests.find(e=>e.id===t.id))return!1;this.game.player.quests.push({...t});return!0}completeQuest(e){let t=this.game.player.quests.find(t=>t.id===e);if(!t||!t.completed)return!1;let n=this.quests[e];this.game.player.gainExp(n.reward.exp);this.game.player.gold+=n.reward.gold;n.reward.items.forEach(e=>{for(let t=0;t<(e.count||1);t++)this.game.player.inventory.push(this.game.combat.createItem(e.id))});this.game.player.quests=this.game.player.quests.filter(t=>t.id!==e);this.game.player.completedQuests.push(e);return!0}checkProgress(e,t){this.game.player.quests.forEach(n=>{if(n.completed)return;if(n.type==='kill'&&n.target===t){n.current++;n.current>=n.count&&(n.completed=!0,this.game.ui.showQuestComplete(n))}})}}
+
+class UI{constructor(e){this.game=e;this.panels=['inventory','quest','skill','map'];this.setupEventListeners()}setupEventListeners(){document.getElementById('btn-bag').addEventListener('click',()=>this.togglePanel('inventory'));document.getElementById('btn-quest').addEventListener('click',()=>this.togglePanel('quest'));document.getElementById('btn-skill').addEventListener('click',()=>this.togglePanel('skill'));document.getElementById('btn-map').addEventListener('click',()=>this.togglePanel('map'));document.querySelectorAll('.close-btn').forEach(e=>e.addEventListener('click',t=>{t.target.closest('.panel').classList.add('hidden')}));document.getElementById('btn-attack').addEventListener('click',()=>this.game.playerAttack());document.getElementById('btn-skill1').addEventListener('click',()=>this.game.useSkill(0));document.getElementById('btn-skill2').addEventListener('click',()=>this.game.useSkill(1));document.getElementById('btn-skill3').addEventListener('click',()=>this.game.useSkill(2));document.querySelector('.dialog-next').addEventListener('click',()=>this.game.nextDialog())}update(){let e=this.game.player;document.getElementById('player-level').textContent='Lv.'+e.level;document.getElementById('player-role').textContent=e.role==='swordsman'?'剑侠':e.role==='mage'?'方士':'医仙';let t=document.querySelector('#hp-bar .bar-fill');t&&(t.style.width=e.hp/e.maxHp*100+'%');let n=document.querySelector('#mp-bar .bar-fill');n&&(n.style.width=e.mp/e.maxMp*100+'%');this.updateQuestTracker();this.updateMiniMap()}updateQuestTracker(){let e=this.game.player.quests.find(e=>!e.completed);if(e){document.querySelector('.quest-title').textContent='主线: '+e.title;let t=e.desc;e.count&&(t+=' ('+e.current+'/'+e.count+')');document.querySelector('.quest-desc').textContent=t}else{document.querySelector('.quest-title').textContent='暂无任务';document.querySelector('.quest-desc').textContent='寻找NPC接取任务'}}updateMiniMap(){let e=document.getElementById('mini-map'),t=e.getContext('2d');if(!t)return;e.width=100;e.height=100;let n=MapData.SCENES[this.game.player.currentMap];t.fillStyle=n.bgColor;t.fillRect(0,0,100,100);let r=100/n.width,a=100/n.height;this.game.monsters.forEach(e=>{e.isDead||(t.fillStyle='#f44336',t.fillRect(e.x*r-2,e.y*a-2,4,4))});this.game.npcs.forEach(e=>{t.fillStyle='#ffd700';t.fillRect(e.x*r-2,e.y*a-2,4,4)});let o=this.game.player;t.fillStyle='#4caf50';t.beginPath();t.arc(o.x*r,o.y*a,3,0,Math.PI*2);t.fill()}showDialog(e,t){let n=document.getElementById('dialog-box');n.classList.remove('hidden');n.querySelector('.npc-avatar').textContent=t.icon||'👤';n.querySelector('.dialog-text').textContent=e}hideDialog(){document.getElementById('dialog-box').classList.add('hidden')}showQuestComplete(e){let t=document.createElement('div');t.className='chat-bubble';t.style.left='50%';t.style.top='30%';t.style.transform='translateX(-50%)';t.textContent='任务完成: '+e.title;document.getElementById('ui-layer').appendChild(t);setTimeout(()=>t.remove(),3e3)}togglePanel(e){let t=document.getElementById(e+'-panel');if(t.classList.contains('hidden')){this.panels.forEach(e=>document.getElementById(e+'-panel').classList.add('hidden'));t.classList.remove('hidden');e==='inventory'&&this.renderInventory();e==='quest'&&this.renderQuests();e==='skill'&&this.renderSkills();e==='map'&&this.renderMap()}else t.classList.add('hidden')}renderInventory(){let e=document.querySelector('.inventory-grid');e.innerHTML='';this.game.player.inventory.forEach((t,n)=>{let r=document.createElement('div');r.className='inventory-slot';r.innerHTML='<span>'+(t.icon||'📦')+'</span>';r.title=t.name+'\n'+t.desc;e.appendChild(r)})}renderQuests(){let e=document.querySelector('.quest-list');e.innerHTML='';this.game.player.quests.forEach(t=>{let n=document.createElement('div');n.className='quest-item';n.innerHTML='<h4>'+t.title+(t.completed?' ✓':'')+'</h4><p>'+t.desc+'</p>'+(t.count?'<p style="color:#d4af37">进度: '+t.current+'/'+t.count+'</p>':'');e.appendChild(n)});if(this.game.player.quests.length===0){let t=document.createElement('div');t.className='quest-item';t.innerHTML='<h4>暂无任务</h4><p>与NPC对话接取任务</p>';e.appendChild(t)}}renderSkills(){let e=document.querySelector('.skill-list');e.innerHTML='';this.game.player.skills.forEach((t,n)=>{let r=document.createElement('div');r.className='skill-item';r.innerHTML='<h4>'+(t.icon||'🔹')+' '+t.name+'</h4><p>'+t.desc+'</p><p style="color:#8ab4c7">消耗: '+t.mp+'MP | 冷却: '+t.cd+'秒</p>';e.appendChild(r)})}renderMap(){let e=document.querySelector('.world-map');e.innerHTML='';Object.keys(MapData.SCENES).forEach(t=>{let n=MapData.SCENES[t],r=document.createElement('div');r.className='map-node'+(t===this.game.player.currentMap?' current':'');r.textContent=n.name+(t===this.game.player.currentMap?' (当前)':'');r.addEventListener('click',()=>{t!==this.game.player.currentMap&&this.game.teleport(t)});e.appendChild(r)})}}
+class MobileControls{constructor(e){this.game=e;this.joystick={active:!1,centerX:0,centerY:0,knobX:0,knobY:0,direction:{x:0,y:0},maxRadius:50};this.touchId=null;this.setupJoystick();this.setupTouchAttack()}setupJoystick(){let e=document.getElementById('joystick-zone'),t=document.getElementById('joystick-base'),n=document.getElementById('joystick-knob');e.addEventListener('touchstart',e=>{e.preventDefault();let t=e.changedTouches[0];this.joystick.active=!0;this.joystick.touchId=t.identifier;this.joystick.centerX=t.clientX;this.joystick.centerY=t.clientY;this.joystick.knobX=0;this.joystick.knobY=0;this.updateJoystickVisual()},!1);e.addEventListener('touchmove',e=>{e.preventDefault();if(!this.joystick.active)return;let t=Array.from(e.changedTouches).find(e=>e.identifier===this.joystick.touchId);if(!t)return;let n=t.clientX-this.joystick.centerX,r=t.clientY-this.joystick.centerY,a=Math.sqrt(n*n+r*r);a>this.joystick.maxRadius&&(n=n/a*this.joystick.maxRadius,r=r/a*this.joystick.maxRadius);this.joystick.knobX=n;this.joystick.knobY=r;this.joystick.direction={x:n/this.joystick.maxRadius,y:r/this.joystick.maxRadius};this.updateJoystickVisual();this.game.setPlayerMove(this.joystick.direction.x,this.joystick.direction.y)},!1);e.addEventListener('touchend',e=>{e.preventDefault();let t=Array.from(e.changedTouches).find(e=>e.identifier===this.joystick.touchId);t&&(this.joystick.active=!1,this.joystick.direction={x:0,y:0},this.joystick.knobX=0,this.joystick.knobY=0,this.updateJoystickVisual(),this.game.setPlayerMove(0,0))},!1)}updateJoystickVisual(){let e=document.getElementById('joystick-knob');e&&(e.style.transform='translate('+this.joystick.knobX+'px,'+this.joystick.knobY+'px)')}setupTouchAttack(){let e=document.getElementById('gameCanvas');e.addEventListener('touchstart',e=>{e.preventDefault();let t=e.changedTouches[0],n=e.target.getBoundingClientRect(),r=t.clientX-n.left,a=t.clientY-n.top;if(this.isInJoystickArea(t.clientX,t.clientY))return;this.attackTouchId=t.identifier;this.handleTouchAttack(r,a)},!1);e.addEventListener('touchmove',e=>{e.preventDefault()},!1);e.addEventListener('touchend',e=>{e.preventDefault();Array.from(e.changedTouches).find(e=>e.identifier===this.attackTouchId)&&(this.attackTouchId=null)},!1)}isInJoystickArea(e,t){let n=document.getElementById('joystick-zone').getBoundingClientRect();return e>=n.left&&e<=n.right&&t>=n.top&&t<=n.bottom}handleTouchAttack(e,t){let n=this.game.canvas.getBoundingClientRect(),r=e/n.width*this.game.canvas.width,a=t/n.height*this.game.canvas.height,o=this.game.camera.x-this.game.canvas.width/2+r,s=this.game.camera.y-this.game.canvas.height/2+a,i=this.game.findNearestMonster(o,s);if(i&&Utils.distance(this.game.player.x,this.game.player.y,i.x,i.y)<=this.game.player.getAttackRange()+20){this.game.playerAttackTarget(i)}else{let l=this.game.findNearestNPC(o,s);l&&Utils.distance(this.game.player.x,this.game.player.y,l.x,l.y)<=80&&this.game.interactNPC(l)}}}
+
+class Game{constructor(){this.canvas=document.getElementById('gameCanvas');this.ctx=this.canvas.getContext('2d');this.camera={x:0,y:0};this.player=null;this.monsters=[];this.npcs=[];this.projectiles=[];this.lastTime=0;this.running=!1;this.currentScene=null;this.resize();window.addEventListener('resize',()=>this.resize());this.setupSaveSystem()}resize(){this.canvas.width=window.innerWidth;this.canvas.height=window.innerHeight;this.ctx.imageSmoothingEnabled=!1}setupSaveSystem(){document.getElementById('btn-save').addEventListener('click',()=>this.showSavePanel());document.getElementById('btn-load').addEventListener('click',()=>this.showLoadPanel());document.querySelector('#save-panel .close-btn').addEventListener('click',()=>{document.getElementById('save-panel').classList.add('hidden')});document.getElementById('btn-import').addEventListener('click',()=>this.importSave())}showSavePanel(){if(!this.player)return;let e=this.serializeSave(),t=btoa(JSON.stringify(e));document.getElementById('save-code').value=t;document.getElementById('save-panel').classList.remove('hidden');localStorage.setItem('pal_save_auto',t);this.showToast('存档已自动保存')}showLoadPanel(){let e=localStorage.getItem('pal_save_auto');e&&(document.getElementById('load-code').value=e);document.getElementById('save-panel').classList.remove('hidden')}importSave(){let e=document.getElementById('load-code').value.trim();if(!e)return;try{let t=JSON.parse(atob(e));this.deserializeSave(t);document.getElementById('save-panel').classList.add('hidden');document.getElementById('login-screen').classList.add('hidden');document.getElementById('hud').classList.remove('hidden');this.showToast('存档读取成功！')}catch(e){alert('存档码无效！')}}serializeSave(){return{version:1,player:{name:this.player.name,role:this.player.role,x:this.player.x,y:this.player.y,level:this.player.level,exp:this.player.exp,expToNext:this.player.expToNext,hp:this.player.hp,maxHp:this.player.maxHp,mp:this.player.mp,maxMp:this.player.maxMp,atk:this.player.atk,def:this.player.def,matk:this.player.matk,mdef:this.player.mdef,gold:this.player.gold,skillPoints:this.player.skillPoints,currentMap:this.player.currentMap},inventory:this.player.inventory.map(e=>({id:e.id,name:e.name,type:e.type,desc:e.desc,count:e.count||1})),quests:this.player.quests,completedQuests:this.player.completedQuests,timestamp:Date.now()}}deserializeSave(e){let t=e.player;this.player=new Player(t.x,t.y,{name:t.name,role:t.role});Object.assign(this.player,{level:t.level,exp:t.exp,expToNext:t.expToNext,hp:t.hp,maxHp:t.maxHp,mp:t.mp,maxMp:t.maxMp,atk:t.atk,def:t.def,matk:t.matk,mdef:t.mdef,gold:t.gold,skillPoints:t.skillPoints,currentMap:t.currentMap});this.player.inventory=e.inventory||[];this.player.quests=e.quests||[];this.player.completedQuests=e.completedQuests||[];this.combat=new CombatSystem(this);this.questSystem=new QuestSystem(this);this.ui=new UI(this);this.mobile=new MobileControls(this);this.loadScene(t.currentMap);this.running=!0;requestAnimationFrame(e=>this.loop(e))}start(e,t){document.getElementById('loading-screen').classList.add('hidden');document.getElementById('login-screen').classList.add('hidden');document.getElementById('hud').classList.remove('hidden');let n=MapData.SCENES.shushan.spawn;this.player=new Player(n.x*64,n.y*64,{name:e,role:t});this.combat=new CombatSystem(this);this.questSystem=new QuestSystem(this);this.ui=new UI(this);this.mobile=new MobileControls(this);this.loadScene('shushan');this.running=!0;requestAnimationFrame(e=>this.loop(e))}loadScene(e){this.currentScene=MapData.SCENES[e];this.player.currentMap=e;this.monsters=[];this.npcs=[];this.projectiles=[];this.currentScene.monsters.forEach(e=>{for(let t=0;t<e.count;t++){let n=e.x*64+(Math.random()-.5)*100,r=e.y*64+(Math.random()-.5)*100;this.monsters.push(new Monster(n,r,e.type))}});this.currentScene.npcs.forEach(e=>{this.npcs.push(new NPC(e.x*64,e.y*64,e))});this.ui.update()}setPlayerMove(e,t){if(!this.player||this.player.isDead)return;if(0===e&&0===t){this.player.vx=0;this.player.vy=0;this.player.state==='move'&&(this.player.state='idle')}else{let n=Math.sqrt(e*e+t*t);n>1&&(e/=n,t/=n);this.player.vx=e*this.player.speed;this.player.vy=t*this.player.speed;this.player.direction={x:e,y:t};this.player.state='move'}}playerAttack(){let e=this.findNearestMonster(this.player.x,this.player.y);e&&Utils.distance(this.player.x,this.player.y,e.x,e.y)<=this.player.getAttackRange()+20&&(this.player.attack(e),e.isDead&&this.combat.handleKill(e,this.player))}playerAttackTarget(e){e&&!e.isDead&&(this.player.attack(e),e.isDead&&this.combat.handleKill(e,this.player))}useSkill(e){let t=this.player.skills[e];if(!t)return;let n=this.findNearestMonster(this.player.x,this.player.y)||this.player;t.type==='heal'||t.type==='buff'&&(n=this.player);this.player.useSkill(t.id,n);this.combat.castSkill(this.player,t.id,n)}interactNPC(e){let t=e.interact(this.player);if('accept'===t.type){this.questSystem.acceptQuest(t.questId);this.ui.showDialog('任务已接取: '+this.questSystem.quests[t.questId].title,e)}else if('complete'===t.type){this.questSystem.completeQuest(t.quest.id);this.ui.showDialog('任务完成！获得奖励。',e)}else if('progress'===t.type){this.ui.showDialog('任务进度: '+t.quest.current+'/'+t.quest.count,e)}else{this.dialogNPC=e;this.dialogStep=0;this.ui.showDialog(t.text,e)}}nextDialog(){if(!this.dialogNPC)return;this.dialogStep++;this.dialogStep>=this.dialogNPC.dialogs.length?(this.ui.hideDialog(),this.dialogNPC=null):this.ui.showDialog(this.dialogNPC.dialogs[this.dialogStep],this.dialogNPC)}findNearestMonster(e,t){let n=null,r=Infinity;return this.monsters.forEach(a=>{if(!a.isDead){let o=Utils.distance(e,t,a.x,a.y);o<r&&(r=o,n=a)}}),n}findNearestNPC(e,t){let n=null,r=Infinity;return this.npcs.forEach(a=>{let o=Utils.distance(e,t,a.x,a.y);o<r&&(r=o,n=a)}),n}checkQuestProgress(e,t){this.questSystem.checkProgress(e,t)}teleport(e){if(!MapData.SCENES[e])return;let t=MapData.SCENES[e].spawn;this.player.x=t.x*64;this.player.y=t.y*64;this.loadScene(e)}showToast(e){let t=document.createElement('div');t.className='chat-bubble';t.style.left='50%';t.style.top='60%';t.style.transform='translateX(-50%)';t.style.background='rgba(212,175,55,0.9)';t.style.color='#0a1628';t.style.fontWeight='bold';t.textContent=e;document.getElementById('ui-layer').appendChild(t);setTimeout(()=>t.remove(),2e3)}update(e){if(!this.player)return;this.player.update(e,this.currentScene);this.currentScene.exits.forEach(t=>{let n=t.x*64,r=t.y*64;Utils.distance(this.player.x,this.player.y,n,r)<40&&this.teleport(t.to)});this.monsters.forEach(t=>t.update(e,this.player));this.combat.update(e);this.camera.x=Utils.lerp(this.camera.x,this.player.x,.1);this.camera.y=Utils.lerp(this.camera.y,this.player.y,.1);this.ui.update()}draw(){let e=this.ctx,t=this.canvas.width,n=this.canvas.height;e.clearRect(0,0,t,n);if(!this.currentScene)return;e.fillStyle=this.currentScene.bgColor;e.fillRect(0,0,t,n);e.save();e.translate(t/2-this.camera.x,n/2-this.camera.y);let r=64,a=Math.floor((this.camera.x-t/2)/r)-1,o=Math.floor((this.camera.x+t/2)/r)+1,s=Math.floor((this.camera.y-n/2)/r)-1,i=Math.floor((this.camera.y+n/2)/r)+1;for(let l=a;l<=o;l++)for(let c=s;c<=i;c++)if(!(l<0||c<0||l>=this.currentScene.width||c>=this.currentScene.height)){e.fillStyle=(l+c)%2==0?this.currentScene.groundColor:'#223a2d';e.fillRect(l*r,c*r,r,r)}this.currentScene.objects.forEach(t=>{e.fillStyle=t.color;if('tree'===t.type){e.fillRect(t.x*r,t.y*r,t.w*r,t.h*r);e.fillStyle='#1b5e20';e.beginPath();e.arc(t.x*r+t.w*r/2,t.y*r,t.w*r*.8,0,2*Math.PI);e.fill()}else if('water'===t.type){e.fillStyle='rgba(65,105,225,0.6)';e.fillRect(t.x*r,t.y*r,t.w*r,t.h*r)}else e.fillRect(t.x*r,t.y*r,t.w*r,t.h*r)});this.currentScene.exits.forEach(t=>{e.fillStyle='rgba(212,175,55,0.3)';e.fillRect(t.x*r,t.y*r,r,r);e.fillStyle='#d4af37';e.font='12px sans-serif';e.textAlign='center';e.fillText('→',t.x*r+r/2,t.y*r+r/2)});let u=[...this.npcs,...this.monsters,this.player];u.sort((e,t)=>e.y-t.y);u.forEach(t=>t.draw(e,this.camera.x,this.camera.y,this.canvas));this.combat.draw(e,this.camera.x,this.camera.y,this.canvas);e.restore()}loop(e){if(!this.running)return;let t=Math.min((e-this.lastTime)/1e3,.05);this.lastTime=e;t>0&&(this.update(t),this.draw());requestAnimationFrame(e=>this.loop(e))}}function adjustColor(e,t){let n=parseInt(e.replace('#',''),16),r=(n>>16)+t,a=(n>>8&255)+t,o=(255&n)+t;return'#'+(16777216+(r<255?r<1?0:r:255)*65536+(a<255?a<1?0:a:255)*256+(o<255?o<1?0:o:255)).toString(16).slice(1)}window.addEventListener('load',()=>{let e=new Game,t='swordsman';document.querySelector('.role-card[data-role="swordsman"]').classList.add('active');document.querySelectorAll('.role-card').forEach(r=>{r.addEventListener('click',()=>{document.querySelectorAll('.role-card').forEach(e=>e.classList.remove('active'));r.classList.add('active');t=r.dataset.role})});document.getElementById('start-game').addEventListener('click',()=>{let n=document.getElementById('player-name').value.trim()||'少侠';e.start(n,t)})});
+</script>
+</head>
+<body>
+<div id="game-wrapper">
+<canvas id="gameCanvas"></canvas>
+<div id="ui-layer">
+<div id="loading-screen">
+<div class="loading-content">
+<h1>仙剑奇侠传Online</h1>
+<div class="loading-bar"><div class="loading-progress"></div></div>
+<p class="loading-text">正在进入仙侠世界...</p>
+<p id="version-text" style="color:#8ab4c7;font-size:12px;margin-top:10px">v1.0.0</p>
+</div>
+</div>
+<div id="update-notice" class="hidden">
+<div class="update-panel">
+<h3>发现新版本</h3>
+<p>游戏已更新，点击刷新获取最新内容</p>
+<button id="btn-update">立即更新</button>
+</div>
+</div>
+<div id="login-screen" class="hidden">
+<div class="login-panel">
+<h2>仙剑奇侠传Online</h2>
+<div class="server-select">
+<label>选择服务器</label>
+<select id="server-select">
+<option value="1">电信一区-蜀山剑派</option>
+<option value="2">电信二区-蓬莱仙境</option>
+<option value="3">网通一区-昆仑山脉</option>
+</select>
+</div>
+<div class="role-select">
+<h3>选择职业</h3>
+<div class="role-cards">
+<div class="role-card" data-role="swordsman">
+<div class="role-icon">&#x2694;&#xFE0F;</div>
+<h4>剑侠</h4>
+<p>近战物理输出<br>高爆发高机动</p>
+</div>
+<div class="role-card" data-role="mage">
+<div class="role-icon">&#x1F52E;</div>
+<h4>方士</h4>
+<p>远程法术输出<br>群体伤害控制</p>
+</div>
+<div class="role-card" data-role="healer">
+<div class="role-icon">&#x1F49A;</div>
+<h4>医仙</h4>
+<p>辅助治疗职业<br>团队续航核心</p>
+</div>
+</div>
+</div>
+<input type="text" id="player-name" placeholder="输入角色名" maxlength="8">
+<button id="start-game">进入游戏</button>
+<div style="margin-top:15px">
+<button id="btn-load" style="background:rgba(212,175,55,0.2);border:1px solid rgba(212,175,55,0.4);color:#d4af37;padding:10px 20px;border-radius:8px;width:100%;cursor:pointer">读取存档</button>
+</div>
+</div>
+</div>
+<div id="hud" class="hidden">
+<div id="top-bar">
+<div id="player-info">
+<div id="avatar"></div>
+<div id="status-bars">
+<div id="hp-bar"><div class="bar-fill"></div><span class="bar-text">HP</span></div>
+<div id="mp-bar"><div class="bar-fill"></div><span class="bar-text">MP</span></div>
+</div>
+<div id="level-info">
+<span id="player-level">Lv.1</span>
+<span id="player-role">剑侠</span>
+</div>
+</div>
+<div id="mini-map"></div>
+<button id="btn-save" class="menu-btn" style="position:absolute;top:10px;right:130px;padding:6px 12px;font-size:11px">存档</button>
+</div>
+<div id="quest-tracker">
+<div class="quest-title">主线: 初入蜀山</div>
+<div class="quest-desc">与掌门对话</div>
+</div>
+<div id="bottom-controls">
+<div id="joystick-zone">
+<div id="joystick-base">
+<div id="joystick-knob"></div>
+</div>
+</div>
+<div id="action-buttons">
+<button id="btn-attack" class="action-btn">普攻</button>
+<button id="btn-skill1" class="action-btn">技能1</button>
+<button id="btn-skill2" class="action-btn">技能2</button>
+<button id="btn-skill3" class="action-btn">大招</button>
+</div>
+<div id="menu-buttons">
+<button id="btn-bag" class="menu-btn">背包</button>
+<button id="btn-quest" class="menu-btn">任务</button>
+<button id="btn-skill" class="menu-btn">技能</button>
+<button id="btn-map" class="menu-btn">地图</button>
+</div>
+</div>
+</div>
+<div id="dialog-box" class="hidden">
+<div class="dialog-content">
+<div class="npc-avatar"></div>
+<div class="dialog-text"></div>
+<button class="dialog-next">继续</button>
+</div>
+</div>
+<div id="inventory-panel" class="panel hidden">
+<div class="panel-header"><h3>背包</h3><button class="close-btn">&#xD7;</button></div>
+<div class="inventory-grid"></div>
+</div>
+<div id="quest-panel" class="panel hidden">
+<div class="panel-header"><h3>任务</h3><button class="close-btn">&#xD7;</button></div>
+<div class="quest-list"></div>
+</div>
+<div id="skill-panel" class="panel hidden">
+<div class="panel-header"><h3>技能</h3><button class="close-btn">&#xD7;</button></div>
+<div class="skill-list"></div>
+</div>
+<div id="map-panel" class="panel hidden">
+<div class="panel-header"><h3>世界地图</h3><button class="close-btn">&#xD7;</button></div>
+<div class="world-map"></div>
+</div>
+<div id="save-panel" class="panel hidden">
+<div class="panel-header"><h3>存档管理</h3><button class="close-btn">&#xD7;</button></div>
+<div style="padding:20px">
+<p style="color:#8ab4c7;margin-bottom:15px">将下方存档码复制保存，可在其他设备导入</p>
+<textarea id="save-code" style="width:100%;height:80px;background:rgba(255,255,255,0.05);border:1px solid rgba(212,175,55,0.2);border-radius:8px;color:#e0e0e0;padding:10px;font-size:12px;resize:none" readonly></textarea>
+<div style="margin-top:15px">
+<p style="color:#8ab4c7;margin-bottom:10px">导入存档（粘贴存档码）</p>
+<textarea id="load-code" style="width:100%;height:60px;background:rgba(255,255,255,0.05);border:1px solid rgba(212,175,55,0.2);border-radius:8px;color:#e0e0e0;padding:10px;font-size:12px;resize:none" placeholder="粘贴存档码..."></textarea>
+<button id="btn-import" style="margin-top:10px;width:100%;padding:10px;background:rgba(212,175,55,0.2);border:1px solid rgba(212,175,55,0.4);border-radius:8px;color:#d4af37;cursor:pointer">导入存档</button>
+</div>
+</div>
+</div>
+<div id="damage-layer"></div>
+</div>
+</div>
+</body>
+</html>
